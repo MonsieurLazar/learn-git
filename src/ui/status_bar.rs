@@ -39,7 +39,7 @@ pub fn draw(frame: &mut Frame, area: Rect, state: &UpdateState) {
 
             let gauge = LineGauge::default()
                 .ratio(ratio)
-                .label(Line::from(format!("downloading v{latest}")))
+                .label(Line::from(format!(" downloading v{latest}")))
                 .filled_style(theme::accent_text())
                 .unfilled_style(theme::muted_text());
 
