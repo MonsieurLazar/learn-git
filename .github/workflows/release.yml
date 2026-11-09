@@ -1,0 +1,150 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish (defaults to the latest v* tag)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  BINARY: learn-git
+  CARGO_TERM_COLOR: always
+
+jobs:
+  prepare:
+    name: Resolve tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag
+        id: tag
+        shell: bash
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            tag="$GITHUB_REF_NAME"
+          else
+            tag="${{ inputs.tag }}"
+            if [[ -z "$tag" ]]; then
+              tag="$(git describe --tags --abbrev=0)"
+            fi
+          fi
+
+          if [[ "$tag" != v* ]]; then
+            echo "tag must start with v, got: $tag"
+            exit 1
+          fi
+
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+
+      - name: Check version
+        shell: bash
+        run: |
+          tag="${{ steps.tag.outputs.tag }}"
+          cargo_version=$(python -c "import tomllib; print(tomllib.load(open('Cargo.toml','rb'))['package']['version'])")
+          if [[ "${tag#v}" != "$cargo_version" ]]; then
+            echo "tag $tag does not match Cargo.toml version $cargo_version"
+            exit 1
+          fi
+
+  build:
+    name: ${{ matrix.target }}
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            ext: ""
+          - runner: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            ext: ""
+            linker: aarch64-linux-gnu-gcc
+            packages: gcc-aarch64-linux-gnu
+          - runner: macos-14
+            target: x86_64-apple-darwin
+            ext: ""
+          - runner: macos-14
+            target: aarch64-apple-darwin
+            ext: ""
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            ext: ".exe"
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - name: Install cross compiler
+        if: matrix.packages
+        run: sudo apt-get update && sudo apt-get install -y ${{ matrix.packages }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.target }}
+
+      - name: Build
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: ${{ matrix.linker }}
+          BUILD_TARGET: ${{ matrix.target }}
+        run: cargo build --locked --release --target ${{ matrix.target }}
+
+      - name: Package
+        shell: bash
+        run: |
+          tag="${{ needs.prepare.outputs.tag }}"
+          name="${BINARY}-${tag}-${{ matrix.target }}"
+          mkdir -p "dist/$name"
+          cp "target/${{ matrix.target }}/release/${BINARY}${{ matrix.ext }}" "dist/$name/"
+          cp README.md LICENSE "dist/$name/"
+          tar -czf "$name.tar.gz" -C "dist/$name" .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: "*.tar.gz"
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Checksums
+        run: cd dist && sha256sum *.tar.gz > SHA256SUMS
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          name: ${{ needs.prepare.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            dist/*.tar.gz
+            dist/SHA256SUMS
