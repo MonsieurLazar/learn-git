@@ -79,10 +79,10 @@ jobs:
             ext: ""
             linker: aarch64-linux-gnu-gcc
             packages: gcc-aarch64-linux-gnu
-          - runner: macos-14
+          - runner: macos-15-intel
             target: x86_64-apple-darwin
             ext: ""
-          - runner: macos-14
+          - runner: macos-15
             target: aarch64-apple-darwin
             ext: ""
           - runner: windows-latest
