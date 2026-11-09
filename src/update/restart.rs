@@ -1,9 +1,9 @@
+use std::path::Path;
 use std::process::Command;
 
 use anyhow::Result;
 
-pub fn restart() -> Result<()> {
-    let exe = std::env::current_exe()?;
+pub fn restart(exe: &Path) -> Result<()> {
     let args: Vec<_> = std::env::args_os().skip(1).collect();
 
     #[cfg(unix)]

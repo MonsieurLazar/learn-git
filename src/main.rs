@@ -16,6 +16,8 @@ use ratatui::{Terminal, backend::CrosstermBackend};
 use crate::app::App;
 
 fn main() -> Result<()> {
+    let exe = std::env::current_exe()?;
+
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen)?;
@@ -32,7 +34,7 @@ fn main() -> Result<()> {
     result?;
 
     if app.restart {
-        update::restart::restart()?;
+        update::restart::restart(&exe)?;
     }
 
     Ok(())
