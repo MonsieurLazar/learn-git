@@ -1,0 +1,25 @@
+[package]
+name = "learn-git"
+version = "0.1.0"
+edition = "2024"
+description = "A tiny TUI that says hello and updates itself"
+license = "MIT"
+repository = "https://github.com/MonsieurLazar/learn-git"
+
+[dependencies]
+anyhow = "1.0.104"
+crossterm = "0.29.0"
+flate2 = "1.1.11"
+ratatui = { version = "0.30.2", features = ["crossterm_0_29"] }
+self-replace = "1.5.1"
+semver = "1.0.28"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+sha2 = "0.11.1"
+tar = "0.4.46"
+ureq = { version = "3.5.1", features = ["json"] }
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
