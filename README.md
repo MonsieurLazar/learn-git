@@ -31,3 +31,5 @@ cargo build --release
 ```
 
 Releases are built for Linux (x86_64, aarch64), macOS (x86_64, aarch64) and Windows (x86_64).
+
+Contributions and bug reports are welcome.
