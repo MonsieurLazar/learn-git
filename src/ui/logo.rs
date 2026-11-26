@@ -199,10 +199,8 @@ impl Logo {
     /// while the logo itself uses bottom-left like the canvas does.
     fn point(&self, ix: usize, iy: usize) -> (f64, f64) {
         let (rx, ry) = self.resolution;
-        let x = LOGO_W / 2.0 - self.x_span / 2.0
-            + (ix as f64 + 0.5) / rx as f64 * self.x_span;
-        let y = LOGO_H / 2.0 + self.y_span / 2.0
-            - (iy as f64 + 0.5) / ry as f64 * self.y_span;
+        let x = LOGO_W / 2.0 - self.x_span / 2.0 + (ix as f64 + 0.5) / rx as f64 * self.x_span;
+        let y = LOGO_H / 2.0 + self.y_span / 2.0 - (iy as f64 + 0.5) / ry as f64 * self.y_span;
         (x, y)
     }
 
@@ -251,8 +249,7 @@ impl Logo {
                 let rim = mix(base, theme::panel_color(), 0.1);
                 color = Some(mix(inner, rim, t));
             } else if distance < outer + CONTOUR {
-                let contour =
-                    mix(mix(base, tone.highlight(), 0.2), theme::panel_color(), 0.66);
+                let contour = mix(mix(base, tone.highlight(), 0.2), theme::panel_color(), 0.66);
                 if color.is_none_or(|current| luminance(contour) > luminance(current)) {
                     color = Some(contour);
                 }
@@ -341,8 +338,10 @@ fn bezier(p0: (f64, f64), p1: (f64, f64), p2: (f64, f64), p3: (f64, f64)) -> Vec
     for i in 0..=steps {
         let t = i as f64 / steps as f64;
         let u = 1.0 - t;
-        let x = u * u * u * p0.0 + 3.0 * u * u * t * p1.0 + 3.0 * u * t * t * p2.0 + t * t * t * p3.0;
-        let y = u * u * u * p0.1 + 3.0 * u * u * t * p1.1 + 3.0 * u * t * t * p2.1 + t * t * t * p3.1;
+        let x =
+            u * u * u * p0.0 + 3.0 * u * u * t * p1.0 + 3.0 * u * t * t * p2.0 + t * t * t * p3.0;
+        let y =
+            u * u * u * p0.1 + 3.0 * u * u * t * p1.1 + 3.0 * u * t * t * p2.1 + t * t * t * p3.1;
         points.push((x, y));
     }
 
@@ -355,9 +354,8 @@ fn mix(a: Color, b: Color, t: f64) -> Color {
         return b;
     };
 
-    let channel = |a: u8, b: u8| -> u8 {
-        (f64::from(a) + (f64::from(b) - f64::from(a)) * t).round() as u8
-    };
+    let channel =
+        |a: u8, b: u8| -> u8 { (f64::from(a) + (f64::from(b) - f64::from(a)) * t).round() as u8 };
 
     Color::Rgb(channel(ar, br), channel(ag, bg), channel(ab, bb))
 }
@@ -368,4 +366,3 @@ fn luminance(color: Color) -> f64 {
     };
     0.2126 * f64::from(r) + 0.7152 * f64::from(g) + 0.0722 * f64::from(b)
 }
-
