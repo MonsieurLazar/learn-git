@@ -7,12 +7,22 @@ use crate::update::{self, CheckResult, UpdateEvent, UpdateState};
 
 const CHECK_INTERVAL: Duration = Duration::from_secs(30);
 
+/// Keep in sync with the chapter list in `src/ui/chapters.rs`.
+const CHAPTER_COUNT: usize = 8;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Screen {
     Home,
     Chapters,
+    /// A chapter detail page. The value is the index into the chapter list.
+    Chapter(usize),
 }
 pub struct App {
     pub screen: Screen,
+    /// Index of the highlighted chapter on the Chapters screen.
+    pub selected_chapter: usize,
+    /// Vertical scroll offset of the open chapter detail page.
+    pub chapter_scroll: u16,
     pub state: UpdateState,
     pub should_quit: bool,
     pub restart: bool,
@@ -25,6 +35,8 @@ impl App {
     pub fn new() -> Self {
         let mut app = Self {
             screen: Screen::Home,
+            selected_chapter: 0,
+            chapter_scroll: 0,
             state: UpdateState::Idle,
             should_quit: false,
             restart: false,
@@ -53,7 +65,29 @@ impl App {
                 _ => {}
             },
             Screen::Chapters => match key.code {
+                KeyCode::Up => {
+                    self.selected_chapter = self.selected_chapter.saturating_sub(1);
+                }
+                KeyCode::Down => {
+                    self.selected_chapter =
+                        (self.selected_chapter + 1).min(CHAPTER_COUNT.saturating_sub(1));
+                }
+                KeyCode::Enter => {
+                    self.chapter_scroll = 0;
+                    self.screen = Screen::Chapter(self.selected_chapter);
+                }
                 KeyCode::Esc | KeyCode::Backspace => self.screen = Screen::Home,
+                KeyCode::Char('q') => self.should_quit = true,
+                _ => {}
+            },
+            Screen::Chapter(_) => match key.code {
+                KeyCode::Up => {
+                    self.chapter_scroll = self.chapter_scroll.saturating_sub(1);
+                }
+                KeyCode::Down => {
+                    self.chapter_scroll = self.chapter_scroll.saturating_add(1);
+                }
+                KeyCode::Esc | KeyCode::Backspace => self.screen = Screen::Chapters,
                 KeyCode::Char('q') => self.should_quit = true,
                 _ => {}
             },
