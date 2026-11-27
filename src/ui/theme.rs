@@ -17,6 +17,18 @@ pub fn panel_background() -> Style {
     Style::default().bg(PANEL)
 }
 
+pub fn panel_color() -> Color {
+    PANEL
+}
+
+pub fn accent_color() -> Color {
+    ACCENT
+}
+
+pub fn soft_accent_color() -> Color {
+    ACCENT_SOFT
+}
+
 pub fn panel_alt_background() -> Style {
     Style::default().bg(PANEL_ALT)
 }
