@@ -45,7 +45,7 @@ pub fn draw(frame: &mut Frame, area: Rect) {
     ])
     .split(text_area)[1];
 
-    let footer_text = Paragraph::new(Line::from("Press any key to continue(allegedly)"))
+    let footer_text = Paragraph::new(Line::from("Press enter to continue!"))
         .alignment(Alignment::Center)
         .style(theme::soft_accent_text());
 

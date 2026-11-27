@@ -7,7 +7,12 @@ use crate::update::{self, CheckResult, UpdateEvent, UpdateState};
 
 const CHECK_INTERVAL: Duration = Duration::from_secs(30);
 
+pub enum Screen {
+    Home,
+    Chapters,
+}
 pub struct App {
+    pub screen: Screen,
     pub state: UpdateState,
     pub should_quit: bool,
     pub restart: bool,
@@ -19,6 +24,7 @@ pub struct App {
 impl App {
     pub fn new() -> Self {
         let mut app = Self {
+            screen: Screen::Home,
             state: UpdateState::Idle,
             should_quit: false,
             restart: false,
@@ -40,8 +46,17 @@ impl App {
             return;
         }
 
-        if matches!(key.code, KeyCode::Char('q') | KeyCode::Esc) {
-            self.should_quit = true;
+        match self.screen {
+            Screen::Home => match key.code {
+                KeyCode::Enter => self.screen = Screen::Chapters,
+                KeyCode::Char('q') | KeyCode::Esc => self.should_quit = true,
+                _ => {}
+            },
+            Screen::Chapters => match key.code {
+                KeyCode::Esc | KeyCode::Backspace => self.screen = Screen::Home,
+                KeyCode::Char('q') => self.should_quit = true,
+                _ => {}
+            },
         }
     }
 
